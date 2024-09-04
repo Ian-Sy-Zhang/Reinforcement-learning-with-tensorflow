@@ -228,40 +228,80 @@ if OUTPUT_GRAPH:
 var = 3  # control exploration
 
 t1 = time.time()
-for i in range(MAX_EPISODES):
-    s = env.reset()
-    ep_reward = 0
 
-    for j in range(MAX_EP_STEPS):
+# for i in range(MAX_EPISODES):
+#     s = env.reset()
+#     ep_reward = 0
 
-        if RENDER:
-            env.render()
+#     for j in range(MAX_EP_STEPS):
 
-        # Add exploration noise
-        a = actor.choose_action(s)
-        a = np.clip(np.random.normal(a, var), -2, 2)    # add randomness to action selection for exploration
-        s_, r, done, info = env.step(a)
+#         if RENDER:
+#             env.render()
 
-        M.store_transition(s, a, r / 10, s_)
+#         # Add exploration noise
+#         a = actor.choose_action(s)
+#         a = np.clip(np.random.normal(a, var), -2, 2)    # add randomness to action selection for exploration
+#         s_, r, done, info = env.step(a)
 
-        if M.pointer > MEMORY_CAPACITY:
-            var *= .9995    # decay the action randomness
-            b_M = M.sample(BATCH_SIZE)
-            b_s = b_M[:, :state_dim]
-            b_a = b_M[:, state_dim: state_dim + action_dim]
-            b_r = b_M[:, -state_dim - 1: -state_dim]
-            b_s_ = b_M[:, -state_dim:]
+#         M.store_transition(s, a, r / 10, s_)
 
-            critic.learn(b_s, b_a, b_r, b_s_)
-            actor.learn(b_s)
+#         if M.pointer > MEMORY_CAPACITY:
+#             var *= .9995    # decay the action randomness
+#             b_M = M.sample(BATCH_SIZE)
+#             b_s = b_M[:, :state_dim]
+#             b_a = b_M[:, state_dim: state_dim + action_dim]
+#             b_r = b_M[:, -state_dim - 1: -state_dim]
+#             b_s_ = b_M[:, -state_dim:]
 
-        s = s_
-        ep_reward += r
+#             critic.learn(b_s, b_a, b_r, b_s_)
+#             actor.learn(b_s)
 
-        if j == MAX_EP_STEPS-1:
-            print('Episode:', i, ' Reward: %i' % int(ep_reward), 'Explore: %.2f' % var, )
-            if ep_reward > -300:
-                RENDER = True
-            break
+#         s = s_
+#         ep_reward += r
+
+#         if j == MAX_EP_STEPS-1:
+#             print('Episode:', i, ' Reward: %i' % int(ep_reward), 'Explore: %.2f' % var, )
+#             if ep_reward > -300:
+#                 RENDER = True
+#             break
+
+def train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY, 
+          RENDER, BATCH_SIZE, var, state_dim, action_dim):
+    for i in range(MAX_EPISODES):
+        s = env.reset()
+        ep_reward = 0
+
+        for j in range(MAX_EP_STEPS):
+            if RENDER:
+                env.render()
+
+            a = actor.choose_action(s)
+            a = np.clip(np.random.normal(a, var), -2, 2)
+            s_, r, done, info = env.step(a)
+
+            M.store_transition(s, a, r / 10, s_)
+
+            if M.pointer > MEMORY_CAPACITY:
+                var *= .9995
+                b_M = M.sample(BATCH_SIZE)
+                b_s = b_M[:, :state_dim]
+                b_a = b_M[:, state_dim: state_dim + action_dim]
+                b_r = b_M[:, -state_dim - 1: -state_dim]
+                b_s_ = b_M[:, -state_dim:]
+
+                critic.learn(b_s, b_a, b_r, b_s_)
+                actor.learn(b_s)
+
+            s = s_
+            ep_reward += r
+
+            if j == MAX_EP_STEPS-1:
+                print('Episode:', i, ' Reward: %i' % int(ep_reward), 'Explore: %.2f' % var)
+                if ep_reward > -300:
+                    RENDER = True
+                break
+
+train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY, 
+          RENDER, BATCH_SIZE, var, state_dim, action_dim)
 
 print('Running time: ', time.time()-t1)
