@@ -135,35 +135,77 @@ sess.run(tf.global_variables_initializer())
 if OUTPUT_GRAPH:
     tf.summary.FileWriter("logs/", sess.graph)
 
-for i_episode in range(MAX_EPISODE):
-    s = env.reset()
-    t = 0
-    track_r = []
-    while True:
-        if RENDER: env.render()
+# for i_episode in range(MAX_EPISODE):
+#     s = env.reset()
+#     t = 0
+#     track_r = []
+#     while True:
+#         if RENDER: env.render()
 
-        a = actor.choose_action(s)
+#         a = actor.choose_action(s)
 
-        s_, r, done, info = env.step(a)
+#         s_, r, done, info = env.step(a)
 
-        if done: r = -20
+#         if done: r = -20
 
-        track_r.append(r)
+#         track_r.append(r)
 
-        td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
-        actor.learn(s, a, td_error)     # true_gradient = grad[logPi(s,a) * td_error]
+#         td_error = critic.learn(s, r, s_)  # gradient = grad[r + gamma * V(s_) - V(s)]
+#         actor.learn(s, a, td_error)     # true_gradient = grad[logPi(s,a) * td_error]
 
-        s = s_
-        t += 1
+#         s = s_
+#         t += 1
 
-        if done or t >= MAX_EP_STEPS:
-            ep_rs_sum = sum(track_r)
+#         if done or t >= MAX_EP_STEPS:
+#             ep_rs_sum = sum(track_r)
 
-            if 'running_reward' not in globals():
-                running_reward = ep_rs_sum
-            else:
-                running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
-            if running_reward > DISPLAY_REWARD_THRESHOLD: RENDER = True  # rendering
-            print("episode:", i_episode, "  reward:", int(running_reward))
-            break
+#             if 'running_reward' not in globals():
+#                 running_reward = ep_rs_sum
+#             else:
+#                 running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
+#             if running_reward > DISPLAY_REWARD_THRESHOLD: RENDER = True  # rendering
+#             print("episode:", i_episode, "  reward:", int(running_reward))
+#             break
 
+def train(env, actor, critic, MAX_EPISODE, MAX_EP_STEPS, DISPLAY_REWARD_THRESHOLD):
+    global RENDER
+    global running_reward
+    
+    for i_episode in range(MAX_EPISODE):
+        s = env.reset()
+        t = 0
+        track_r = []
+        
+        while True:
+            if RENDER:
+                env.render()
+            
+            a = actor.choose_action(s)
+            s_, r, done, info = env.step(a)
+            
+            if done:
+                r = -20
+            
+            track_r.append(r)
+            
+            td_error = critic.learn(s, r, s_)
+            actor.learn(s, a, td_error)
+            
+            s = s_
+            t += 1
+            
+            if done or t >= MAX_EP_STEPS:
+                ep_rs_sum = sum(track_r)
+                
+                if 'running_reward' not in globals():
+                    running_reward = ep_rs_sum
+                else:
+                    running_reward = running_reward * 0.95 + ep_rs_sum * 0.05
+                
+                if running_reward > DISPLAY_REWARD_THRESHOLD:
+                    RENDER = True
+                
+                print("episode: {}  reward: {:.2f}".format(i_episode, running_reward))
+                break
+
+train(env, actor, critic, MAX_EPISODE, MAX_EP_STEPS, DISPLAY_REWARD_THRESHOLD)
