@@ -265,8 +265,8 @@ t1 = time.time()
 #                 RENDER = True
 #             break
 
-def train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY, 
-          RENDER, BATCH_SIZE, var, state_dim, action_dim):
+def train(env=env, actor=actor, critic=critic, M=M, MAX_EPISODES=MAX_EPISODES, MAX_EP_STEPS=MAX_EP_STEPS, MEMORY_CAPACITY=MEMORY_CAPACITY, 
+          RENDER=RENDER, BATCH_SIZE=BATCH_SIZE, var=var, state_dim=state_dim, action_dim=action_dim):
     for i in range(MAX_EPISODES):
         s = env.reset()
         ep_reward = 0
@@ -301,7 +301,11 @@ def train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY,
                     RENDER = True
                 break
 
-train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY, 
-          RENDER, BATCH_SIZE, var, state_dim, action_dim)
 
-print('Running time: ', time.time()-t1)
+
+if __name__ == '__main__':
+
+    train(env, actor, critic, M, MAX_EPISODES, MAX_EP_STEPS, MEMORY_CAPACITY, 
+              RENDER, BATCH_SIZE, var, state_dim, action_dim)
+
+    print('Running time: ', time.time()-t1)
